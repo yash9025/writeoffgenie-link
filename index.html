@@ -3,102 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Opening App...</title>
+  <title>Deep Link Diagnostics</title>
   <style>
-    body {
-      font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto;
-      background-color: #011C39;
-      color: white;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      padding: 30px;
-      border-radius: 20px;
-      width: 80%;
-      max-width: 300px;
-    }
-    .spinner {
-      margin: 0 auto 20px;
-      width: 40px; height: 40px;
-      border: 4px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 1s infinite linear;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    
-    /* The Nuclear Button */
+    body { font-family: sans-serif; padding: 30px; background: #eee; text-align: center; }
     .btn {
-      display: block;
-      background: #fff;
-      color: #011C39;
-      text-decoration: none;
-      padding: 15px;
-      border-radius: 50px;
-      font-weight: bold;
-      margin-top: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: block; width: 100%; margin: 20px 0; padding: 15px;
+      background: #011C39; color: white; text-decoration: none;
+      border-radius: 8px; font-weight: bold; font-size: 16px;
     }
-    .small-text { font-size: 12px; opacity: 0.7; margin-top: 20px; }
+    .label { font-size: 12px; color: #555; margin-bottom: 5px; display: block; }
   </style>
 </head>
 <body>
+  <h2>🔍 Find the Working Link</h2>
+  <p>If the app is installed, one of these MUST open it.</p>
 
-  <div class="card">
-    <div class="spinner"></div>
-    <h2 id="status">Launching...</h2>
-    <p>Please wait a moment.</p>
-    
-    <a id="nuclear-btn" href="#" class="btn">Open App (Click Here)</a>
-    
-    <div class="small-text">
-      Redirecting to: <span id="code-display">...</span>
-    </div>
-  </div>
+  <span class="label">Test 1: Scheme Only (No .com)</span>
+  <a href="writeoffgenie://?ref=CA-926C21" class="btn">Try Link #1</a>
 
-  <script>
-    // --- CONFIGURATION ---
-    const PACKAGE = "com.writeoffgenie.app";
-    const HOST = "writeoffgenie.com/signuppage";
-    
-    // Get parameters
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get('ref') || params.get('code') || 'CA-926C21';
-    document.getElementById('code-display').textContent = ref;
+  <span class="label">Test 2: Scheme + Path</span>
+  <a href="writeoffgenie://signuppage?ref=CA-926C21" class="btn">Try Link #2</a>
 
-    // --- STRATEGY 1: AUTO-FIRE (Standard Lowercase 'w') ---
-    // This is the most likely to work automatically.
-    // Format: intent://host?ref=...#Intent;scheme=writeoffgenie;package=...;end
-    const autoLink = `intent://${HOST}?ref=${ref}#Intent;scheme=writeoffgenie;package=${PACKAGE};S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3D${PACKAGE};end`;
+  <span class="label">Test 3: Full Standard Link</span>
+  <a href="writeoffgenie://writeoffgenie.com/signuppage?ref=CA-926C21" class="btn">Try Link #3</a>
+ 
+  <span class="label">Test 4: Full Standard Link</span>
+  <a href="Writeoffgenie://writeoffgenie.com/signuppage?ref=CA-926C21" class="btn">Try Link #3</a>
 
-    // --- STRATEGY 2: BUTTON CLICK (Capital 'W') ---
-    // If auto fails, the button tries the Capital version.
-    const manualLink = `intent://${HOST}?ref=${ref}#Intent;scheme=Writeoffgenie;package=${PACKAGE};S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3D${PACKAGE};end`;
-
-    // Set the button to the Capital version
-    document.getElementById('nuclear-btn').href = manualLink;
-
-    // --- EXECUTE ---
-    // 1. Try Auto-Redirect (Lowercase) immediately
-    setTimeout(() => {
-        window.location.href = autoLink;
-    }, 200);
-
-    // 2. If user is still here after 3 seconds, update UI
-    setTimeout(() => {
-        document.getElementById('status').textContent = "Did it open?";
-        document.querySelector('.spinner').style.display = 'none';
-        // The user will naturally click the button now, which tries Strategy 2 (Capital)
-    }, 3000);
-  </script>
-
+  <hr>
+  <p style="font-size: 12px; color: red;">
+    If NONE of these work, the Developer did not set up "writeoffgenie" in the Manifest.
+  </p>
 </body>
 </html>
