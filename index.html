@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redirecting to WriteOffGenie...</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      /* WriteOffGenie Blue Theme */
+      background: linear-gradient(135deg, #011C39 0%, #023057 100%);
+      color: white;
+      text-align: center;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 40px;
+      border-radius: 20px;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    h2 { margin-top: 0; font-size: 24px; font-weight: 700; }
+    p { font-size: 16px; opacity: 0.9; }
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    a { color: white; text-decoration: underline; font-weight: 600; cursor: pointer; }
+    #fallback { display: none; margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+    .ref-code { background: rgba(255, 255, 255, 0.2); padding: 10px 20px; border-radius: 8px; margin: 15px 0; font-family: monospace; font-size: 14px; font-weight: 700; }
+    
+    /* Debug Console Styling */
+    .debug-info {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #1f2937; color: #10b981; font-family: monospace;
+      font-size: 10px; padding: 10px; max-height: 35vh;
+      overflow-y: auto; text-align: left; border-top: 2px solid #10b981; z-index: 9999;
+    }
+    .debug-info div { margin: 2px 0; word-break: break-all; }
+    .error { color: #ef4444; }
+    .success { color: #10b981; }
+    .warn { color: #f59e0b; }
+    .clear-btn {
+      position: fixed; bottom: 36vh; right: 10px;
+      background: #374151; color: white; border: none;
+      padding: 6px 12px; border-radius: 6px; font-size: 11px;
+      z-index: 10000; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner"></div>
+    <h2 id="title">Opening WriteOffGenie...</h2>
+    <p id="message">Connecting your referral code</p>
+    <div class="ref-code" id="ref-display"></div>
+    <div id="fallback">
+      <p>App didn't open automatically?</p>
+      <a href="#" id="deeplink">Tap to Open App Manually</a>
+    </div>
+  </div>
+
+  <button class="clear-btn" onclick="clearLogs()">Clear Logs</button>
+  <div class="debug-info" id="debug-logs"></div>
+
+  <script>
+    const logContainer = document.getElementById('debug-logs');
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = `[${timestamp}] ${message}`;
+      logContainer.appendChild(div);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function clearLogs() { logContainer.innerHTML = ''; log('Logs cleared', 'info'); }
+
+    // --- CONFIGURATION ---
+    // Using Capital 'W' as requested
+    const APP_SCHEME = "Writeoffgenie://writeoffgenie.com/signuppage?ref=";
+    
+    log('=== WRITEOFFGENIE DEEP LINK LAUNCH ===', 'success');
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // UPDATED: Default to CA-926C21 if no code is provided
+    const refCode = urlParams.get('ref') || urlParams.get('code') || 'CA-926C21';
+    
+    document.getElementById('ref-display').textContent = `Code: ${refCode}`;
+
+    // Construct the final link
+    const deepLink = `${APP_SCHEME}${refCode}`;
+    log(`Target URL: ${deepLink}`, 'info');
+    document.getElementById('deeplink').href = deepLink;
+
+    let appOpened = false;
+
+    // Detect if browser loses focus (meaning app likely opened)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        appOpened = true;
+        log('✓ SUCCESS: Browser hidden. OS is launching the app.', 'success');
+      }
+    });
+
+    window.addEventListener('blur', () => {
+      appOpened = true;
+      log('✓ SUCCESS: Window blurred. Handing over to Mobile OS.', 'success');
+    });
+
+    document.getElementById('deeplink').addEventListener('click', (e) => {
+      log('User triggered manual redirect via link click', 'warn');
+      // window.location.href = deepLink; // Optional: Force redirect on click if href fails
+    });
+
+    // Auto-Redirect Logic
+    log('Waiting 500ms for browser stability...', 'info');
+    setTimeout(() => {
+      if (!appOpened) {
+        log('Attempting auto-redirect now...', 'warn');
+        window.location.href = deepLink;
+      }
+    }, 500);
+
+    // Fallback UI Logic
+    setTimeout(() => {
+      if (!appOpened) {
+        log('App failed to launch within 3 seconds.', 'error');
+        log('NOTE: Ensure AndroidManifest.xml matches "Writeoffgenie" (Case Sensitive)', 'error');
+        
+        document.getElementById('title').textContent = "App Not Opening?";
+        document.getElementById('message').textContent = "Make sure WriteOffGenie is installed, then tap below.";
+        document.querySelector('.spinner').style.display = 'none';
+        document.getElementById('fallback').style.display = 'block';
+      }
+    }, 3000);
+  </script>
+</body>
+</html>
