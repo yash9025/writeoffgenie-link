@@ -1,161 +1,34 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Redirecting to WriteOffGenie...</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-      /* WriteOffGenie Brand Gradient */
-      background: linear-gradient(135deg, #011C39 0%, #023057 100%);
-      color: white;
-      text-align: center;
-    }
-    .container {
-      /* Glassmorphism Effect */
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      padding: 40px;
-      border-radius: 20px;
-      max-width: 400px;
-      width: 90%;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-    }
-    h2 { margin-top: 0; font-weight: 700; letter-spacing: -0.5px; }
-    p { opacity: 0.9; line-height: 1.5; }
-    
-    .spinner {
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top: 4px solid white;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Primary Button Style */
-    .btn {
-      display: inline-block;
-      background: white;
-      color: #011C39;
-      text-decoration: none;
-      font-weight: 700;
-      padding: 14px 28px;
-      border-radius: 50px;
-      margin-top: 15px;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    .btn:active { transform: scale(0.95); }
-    
-    .secondary-link {
-      display: block;
-      margin-top: 15px;
-      color: rgba(255,255,255,0.7);
-      font-size: 13px;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-
-    #fallback {
-      display: none;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .ref-badge {
-      display: inline-block;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 4px 12px;
-      border-radius: 6px;
-      font-family: monospace;
-      font-size: 12px;
-      margin-bottom: 15px;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Opening WriteOffGenie</title>
 </head>
 <body>
-  <div class="container">
-    <div class="spinner"></div>
-    <h2 id="title">Opening WriteOffGenie...</h2>
-    
-    <div class="ref-badge" id="ref-display">Connecting...</div>
-    
-    <p id="message">Please wait a moment while we connect your referral.</p>
-    
-    <div id="fallback">
-      <p style="font-size: 15px; font-weight: 600;">App didn't open?</p>
-      
-      <a href="https://play.google.com/store/apps/details?id=com.writeoffgenie.app" class="btn" id="store-link">
-        Download on Play Store
-      </a>
-      
-      <a href="#" class="secondary-link" id="retry-link">I have the app, try again</a>
-    </div>
-  </div>
 
-  <script>
-    // --- CONFIGURATION ---
-    // FOUND IN MANIFEST: writeOffGenie (camelCase)
-    // ANDROID HOST: writeoffgenie.com
-    const SCHEME = "writeOffGenie";
-    const HOST = "writeoffgenie.com";
-    const PATH = "/signuppage"; // Ensure this path matches your Flutter routes
-    
-    // 1. Get the Ref Code
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get('ref') || urlParams.get('code') || 'CA-926C21';
+<script>
+  // Read ref code from URL
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get("ref") || "CA-926C21";
 
-    // 2. Update UI
-    document.getElementById('ref-display').textContent = `Ref: ${refCode}`;
-    
-    // 3. Construct the Correct Deep Link
-    // Format: writeOffGenie://writeoffgenie.com/signuppage?ref=CODE
-    const deepLink = `${SCHEME}://${HOST}${PATH}?ref=${refCode}`;
-    
-    // Also build the Intent Link (Nuclear Option)
-    const package = "com.writeoffgenie.app";
-    const intentLink = `intent://${HOST}${PATH}?ref=${refCode}#Intent;scheme=${SCHEME};package=${package};S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3D${package};end`;
+  // MUST match AndroidManifest EXACTLY
+  const deepLink =
+    "writeOffGenie://writeoffgenie.com/signuppage?ref=" + encodeURIComponent(ref);
 
-    // Set links
-    document.getElementById('retry-link').href = intentLink;
+  // Try opening app
+  window.location.href = deepLink;
 
-    // 4. Auto-Redirect Logic
-    let appOpened = false;
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) appOpened = true;
-    });
+  // Fallback to Play Store after 2 seconds
+  setTimeout(() => {
+    window.location.href =
+      "https://play.google.com/store/apps/details?id=com.writeoffgenie.app";
+  }, 2000);
+</script>
 
-    // Try Intent First (Most powerful for Android)
-    setTimeout(() => {
-      window.location.href = intentLink;
-    }, 200);
+<p style="font-family:sans-serif;text-align:center;margin-top:40px;">
+  Opening WriteOffGenie…
+</p>
 
-    // 5. Fallback UI
-    setTimeout(() => {
-      if (!appOpened) {
-        document.getElementById('title').textContent = "Almost there!";
-        document.getElementById('message').textContent = "It looks like you might need the app.";
-        document.querySelector('.spinner').style.display = 'none';
-        document.getElementById('fallback').style.display = 'block';
-      }
-    }, 2500);
-  </script>
 </body>
 </html>
