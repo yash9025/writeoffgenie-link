@@ -3,32 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Opening WriteOffGenie</title>
+  <title>Opening WriteOffGenie...</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      background: #f5f5f5;
+    }
+    .btn {
+      margin-top: 20px;
+      padding: 15px 30px;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 
-<script>
-  // Read ref code from URL
-  const params = new URLSearchParams(window.location.search);
-  const ref = params.get("ref") || "CA-926C21";
+  <h2>Opening WriteOffGenie...</h2>
+  <p>If it doesn't open automatically, click below:</p>
+  
+  <a id="manual-link" href="#" class="btn">Open App</a>
 
-  // MUST match AndroidManifest EXACTLY
-  const deepLink =
-    "writeOffGenie://writeoffgenie.com/signuppage?ref=" + encodeURIComponent(ref);
+  <script>
+    // 1. Get Ref Code
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref") || "CA-926C21";
 
-  // Try opening app
-  window.location.href = deepLink;
+    // 2. CONFIGURE THE LINK (Capital W)
+    // Format: Writeoffgenie://writeoffgenie.com/signuppage?ref=CODE
+    const scheme = "Writeoffgenie";
+    const host = "writeoffgenie.com/signuppage";
+    
+    const deepLink = `${scheme}://${host}?ref=${encodeURIComponent(ref)}`;
+    const playStore = "https://play.google.com/store/apps/details?id=com.writeoffgenie.app";
 
-  // Fallback to Play Store after 2 seconds
-  setTimeout(() => {
-    window.location.href =
-      "https://play.google.com/store/apps/details?id=com.writeoffgenie.app";
-  }, 2000);
-</script>
+    // 3. Set Manual Button
+    document.getElementById("manual-link").href = deepLink;
 
-<p style="font-family:sans-serif;text-align:center;margin-top:40px;">
-  Opening WriteOffGenie…
-</p>
+    // 4. Auto-Redirect Logic
+    // Try to open app immediately
+    window.location.href = deepLink;
+
+    // 5. Fallback to Play Store
+    // If we are still on this page after 2.5 seconds, assume app didn't open
+    setTimeout(() => {
+      // Check if the browser page is still visible (meaning we didn't switch to the app)
+      if (!document.hidden) {
+        window.location.href = playStore;
+      }
+    }, 2500);
+  </script>
 
 </body>
 </html>
