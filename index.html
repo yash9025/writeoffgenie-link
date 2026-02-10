@@ -3,79 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Redirecting...</title>
+  <title>Loading...</title>
   <style>
     body {
+      background-color: white;
       font-family: sans-serif;
-      background-color: white; /* Pure White */
-      color: black;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
-      text-align: center;
     }
-    
-    /* Simple Loading Spinner */
-    .spinner {
+    .loader {
       border: 4px solid #f3f3f3;
-      border-top: 4px solid #3498db;
+      border-top: 4px solid #333;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 30px;
+      height: 30px;
       animation: spin 1s linear infinite;
-      margin-bottom: 20px;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    p { font-size: 16px; color: #666; }
+    p { margin-top: 20px; color: #333; font-size: 14px; }
   </style>
 </head>
 <body>
 
-  <div class="spinner"></div>
-  <p>Redirecting to WriteOffGenie...</p>
+  <div class="loader"></div>
+  <p>Opening WriteOffGenie...</p>
 
   <script>
-    // --- 1. DETECT IPHONE VS ANDROID ---
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
-
-    // --- 2. SETUP LINKS ---
-    // Deep Link (Lowercase Standard)
+    // --- 1. SETUP ---
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref") || "CA-926C21";
+    
     const scheme = "writeoffgenie";
+    const package = "com.writeoffgenie.app";
     const host = "writeoffgenie.com/signuppage";
     
     // Store Links
-    // Android: Use market:// to auto-open Play Store App
-    const androidStore = "market://details?id=com.writeoffgenie.app";
-    // iOS: Your Real Apple Link
-    const iosStore = "https://apps.apple.com/in/app/writeoffgenie/id6751060559"; 
+    // Note: We use https for fallback to ensure compatibility if market:// fails
+    const androidFallback = `https://play.google.com/store/apps/details?id=${package}`;
+    const iosStore = "https://apps.apple.com/in/app/writeoffgenie/id6751060559";
 
-    // --- 3. BUILD THE URLS ---
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref") || "CA-926C21";
-    const deepLink = `${scheme}://${host}?ref=${encodeURIComponent(ref)}`;
+    // --- 2. DETECT OS ---
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+    const isAndroid = /android/i.test(userAgent);
+
+    // --- 3. CONSTRUCT THE MAGIC LINKS ---
     
-    // Choose the right store based on the phone
-    const finalStoreLink = isIOS ? iosStore : androidStore;
-
-    // --- 4. EXECUTE (THE AUTO-REDIRECT LOGIC) ---
-    
-    // Step A: Try to open the App immediately
-    window.location.href = deepLink;
-
-    // Step B: If the user is still here after 2.5 seconds, Force-Redirect to Store
-    setTimeout(function() {
-      // We check if the browser is still active.
-      // If it is, it means the app didn't open.
-      if (!document.hidden) {
-        window.location.href = finalStoreLink;
-      }
-    }, 2500);
-
+    if (isAndroid) {
+      // ANDROID "INTENT" STRATEGY (The Popup Killer)
+      // This tells Android: "Try to open app. If fail, YOU (the OS) open the fallback URL."
+      // The browser doesn't have to make the decision, so it shows fewer popups.
+      const intentUrl = `intent://${host}?ref=${ref}#Intent;scheme=${scheme};package=${package};S.browser_fallback_url=${encodeURIComponent(androidFallback)};end`;
+      
+      // Fire the Intent immediately
+      window.location.replace(intentUrl);
+      
+    } else if (isIOS) {
+      // iOS STRATEGY
+      // iOS always requires a redirect. We try the app, then the store.
+      const deepLink = `${scheme}://${host}?ref=${ref}`;
+      
+      window.location.replace(deepLink);
+      
+      setTimeout(() => {
+        // If we are still here, go to App Store
+        if (!document.hidden) {
+            window.location.replace(iosStore);
+        }
+      }, 1500); // Faster timeout for iOS
+      
+    } else {
+      // Desktop / Other: Just go to Play Store web
+      window.location.replace(androidFallback);
+    }
   </script>
 
 </body>
