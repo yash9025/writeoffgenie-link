@@ -5,61 +5,151 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Opening WriteOffGenie...</title>
   <style>
+    /* --- BEAUTIFUL THEME --- */
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
-      text-align: center;
-      background: #f5f5f5;
-    }
-    .btn {
-      margin-top: 20px;
-      padding: 15px 30px;
-      background: #007bff;
+      padding: 20px;
+      /* WriteOffGenie Blue Gradient */
+      background: linear-gradient(135deg, #011C39 0%, #023057 100%);
       color: white;
-      text-decoration: none;
-      border-radius: 50px;
-      font-weight: bold;
+      text-align: center;
     }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px); /* For Safari/iPhone */
+      padding: 40px;
+      border-radius: 24px;
+      max-width: 380px;
+      width: 85%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    h2 { margin-top: 0; font-weight: 700; font-size: 22px; letter-spacing: -0.5px; }
+    p { opacity: 0.9; line-height: 1.5; font-size: 16px; margin-bottom: 25px; }
+
+    /* ANIMATED SPINNER */
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* ACTION BUTTON */
+    .btn {
+      display: inline-block;
+      background: white;
+      color: #011C39;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 16px 32px;
+      border-radius: 50px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .btn:active { transform: scale(0.96); }
+    
+    .manual-link {
+      display: block;
+      margin-top: 20px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    
+    /* Hide fallback initially */
+    #fallback-container { display: none; }
   </style>
 </head>
 <body>
 
-  <h2>Opening WriteOffGenie...</h2>
-  <p>If it doesn't open automatically, click below:</p>
-  
-  <a id="manual-link" href="#" class="btn">Open App</a>
+  <div class="glass-card">
+    <div id="loading-state">
+      <div class="spinner"></div>
+      <h2>Opening App...</h2>
+      <p>Connecting securely.</p>
+    </div>
+
+    <div id="fallback-container">
+      <h2 id="store-title">Get the App</h2>
+      <p>It looks like you don't have WriteOffGenie installed yet.</p>
+      
+      <a id="store-button" href="#" class="btn">Download Now</a>
+      
+      <a id="retry-link" href="#" class="manual-link">I have the app, open it</a>
+    </div>
+  </div>
 
   <script>
-    // 1. Get Ref Code
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref") || "CA-926C21";
+    // --- 1. INTELLIGENT OS DETECTION ---
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    // Robust detection for iPhone/iPad/iPod
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
 
-    // 2. CONFIGURE THE LINK (Capital W)
-    // Format: Writeoffgenie://writeoffgenie.com/signuppage?ref=CODE
+    // --- 2. CONFIGURATION ---
+    // Deep Link Scheme (Lowercase Standard)
     const scheme = "writeoffgenie";
     const host = "writeoffgenie.com/signuppage";
     
+    // STORE LINKS
+    // Android: Use market:// to open Play Store App directly (Bypasses Chrome)
+    const androidStore = "market://details?id=com.writeoffgenie.app";
+    // iOS: Your Real Apple Link
+    const iosStore = "https://apps.apple.com/in/app/writeoffgenie/id6751060559"; 
+
+    // --- 3. BUILD LINKS ---
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref") || "CA-926C21";
+    
+    // The Deep Link to open the App
     const deepLink = `${scheme}://${host}?ref=${encodeURIComponent(ref)}`;
-    const playStore = "https://play.google.com/store/apps/details?id=com.writeoffgenie.app";
+    
+    // Select the correct store based on the phone
+    const finalStoreLink = isIOS ? iosStore : androidStore;
+    const storeName = isIOS ? "App Store" : "Play Store";
 
-    // 3. Set Manual Button
-    document.getElementById("manual-link").href = deepLink;
+    // --- 4. UPDATE UI ---
+    const btn = document.getElementById("store-button");
+    btn.href = finalStoreLink;
+    btn.innerText = `Download on ${storeName}`;
+    
+    document.getElementById("retry-link").href = deepLink;
 
-    // 4. Auto-Redirect Logic
-    // Try to open app immediately
+    // --- 5. EXECUTE REDIRECT ---
+    // First, try to open the App immediately
     window.location.href = deepLink;
 
-    // 5. Fallback to Play Store
-    // If we are still on this page after 2.5 seconds, assume app didn't open
+    // --- 6. FALLBACK LOGIC ---
+    // If the user is still on this page after 2.5 seconds, the app isn't installed.
     setTimeout(() => {
-      // Check if the browser page is still visible (meaning we didn't switch to the app)
+      // Check if browser is still active
       if (!document.hidden) {
-        window.location.href = playStore;
+        
+        // OPTION A: Show the beautiful "Download" button (Safest, user friendly)
+        document.getElementById("loading-state").style.display = "none";
+        document.getElementById("fallback-container").style.display = "block";
+        
+        // OPTION B: Auto-redirect to Store (Aggressive, fulfills your "don't ask" request)
+        // We do BOTH: Show the button AND try to force the redirect.
+        window.location.href = finalStoreLink;
       }
     }, 2500);
   </script>
